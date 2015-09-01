@@ -122,6 +122,36 @@ class PGDataStore(BrainDataStore.BrainDataStore):
             else:
                 self.logger.warn("Transaction type not found: %s", bank_transaction.type)
 
+    def get_gatekeeper_schedules(self):
+        return self.runselect("""SELECT id, day, starttime, endtime FROM smarterspacebrain.gatekeeperschedules ORDER BY day, starttime""", [])
+
+    def delete_schedule(self, id):
+        self.runinsert("""DELETE FROM smarterspacebrain.gatekeeperschedules WHERE id=%s""", [id])
+
+    def add_schedule(self, day, from_ts, to_ts):
+        self.logger.debug("new schedule (%s, %s, %s)", [day, from_ts, to_ts])
+        self.runinsert("""INSERT INTO smarterspacebrain.gatekeeperschedules (day, starttime, endtime) VALUES (%s, %s, %s)""", [day, from_ts, to_ts])
+
+    def get_gatekeeper_whitelist(self):
+        schedules = self.get_gatekeeper_schedules()
+        phonenos = self.runselect("""SELECT pn.phonenumber, u.firstname, u.lastname FROM smarterspacebrain.phonenumbers pn, smarterspacebrain.user u WHERE pn.user_id=u.id AND pn.cellphone='TRUE' AND u.member=true""")
+        lines = []
+        for schedule in schedules:
+            lines.append('* %s %s %s' % (schedule['day'], schedule['starttime'], schedule['endtime']))
+        for phoneno in phonenos:
+            phonenumber = phoneno['phonenumber']
+            if (phonenumber.startswith("0", 0, 1)):
+                phonenumber = phonenumber.replace("0", "32", 1)
+            lines.append('%s %s %s' % (phonenumber, phoneno['firstname'], phoneno['lastname']))
+        return lines
+
+
+    # Stock management functions
+    def getproducts(self, user_id):
+        rows = self.runselect(
+            # TODO: change query in something original
+             """SELECT pn.id, pn.user_id, pn.phonenumber, pn.cellphone FROM smarterspacebrain.phonenumbers pn WHERE pn.user_id=%s""",(user_id,))
+        return rows
 
     # private helper methods
 

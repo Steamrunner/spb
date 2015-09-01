@@ -38,6 +38,32 @@ def get_all_gsmnumbers():
     logger.info("** Returning list of GSM numbers")
     return '\n'.join(storage.getgsmnumbers())
 
+# - list of GSM numbers that are allowed to use Gatekeeper
+@app.route('/brain/access/schedules/all', methods=['GET'])
+def get_all_schedules():
+    logger.info("** Returning list of gatekeeper schedules")
+    return jsonify({'schedules': storage.get_gatekeeper_schedules()})
+
+
+@app.route('/brain/access/schedules/delete/<int:id>')
+def delete_schedule(id):
+    storage.delete_schedule(id)
+    return "True"
+
+
+@app.route('/brain/access/schedules/add/<string:day>/<string:from_ts>/<string:to_ts>')
+def add_schedule(day, from_ts, to_ts):
+    storage.add_schedule(day, from_ts, to_ts)
+    return "True"
+
+
+
+@app.route('/brain/access/whitelistfile', methods=['GET'])
+@returns_text
+def get_whitelist():
+    logger.info("** Returning gatekeeper whitelist")
+    return '\n'.join(storage.get_gatekeeper_whitelist())
+
 
 # - list of badges that are allowed to use open the Space door
 @app.route('/brain/access/badgenumbers/all', methods=['GET'])
@@ -136,6 +162,14 @@ def check_password(username, password):
     else:
         return "False"
 
+# -- Stock management
+
+# - list of products currently offered
+@app.route('/brain/stock/products/all', methods=['GET'])
+def get_all_products():
+    logger.info("** Returning list of current products")
+    return '\n'.join(storage.getproducts())
+
 
 
 # GROUNDCONTROL WEBAPP
@@ -160,6 +194,14 @@ def angular():
 @app.route('/groundcontrol/angular.min.js.map')
 def angular_map():
     return app.send_static_file('angular.min.js.map')
+
+@app.route('/groundcontrol/ngDialog.min.js')
+def ngDialog_js():
+    return app.send_static_file('ngDialog.min.js')
+
+@app.route('/groundcontrol/ngDialog.min.css')
+def ngDialog_css():
+    return app.send_static_file('ngDialog.min.css')
 
 @app.route('/groundcontrol/groundcontrol.html')
 def groundcontrol():
